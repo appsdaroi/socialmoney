@@ -4,6 +4,8 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
+        <title>Social Money</title>
+
         <link
           rel="apple-touch-icon"
           sizes="57x57"

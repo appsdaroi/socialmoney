@@ -22,6 +22,7 @@
     "moment": "^2.29.4",
     "moment-timezone": "^0.5.41",
     "next": "13.2.1",
+    "next-auth": "^4.21.1",
     "octokit": "^2.0.14",
     "react": "18.2.0",
     "react-device-detect": "^2.2.3",
