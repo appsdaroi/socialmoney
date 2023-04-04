@@ -17,6 +17,7 @@
     "framer-motion": "^10.0.1",
     "iron-session": "^6.3.1",
     "js-cookie": "^3.0.1",
+    "lib": "^5.0.1",
     "lodash": "^4.17.21",
     "lowdb": "^5.1.0",
     "moment": "^2.29.4",
@@ -26,6 +27,7 @@
     "react": "18.2.0",
     "react-device-detect": "^2.2.3",
     "react-dom": "18.2.0",
+    "react-full-page": "^0.1.12",
     "react-hot-toast": "^2.4.0",
     "react-howler": "^5.2.0",
     "react-lazy-media": "^0.3.1",
@@ -35,8 +37,7 @@
     "sweetalert2-react-content": "^5.0.7",
     "swr": "^2.0.4",
     "validator": "^13.9.0",
-    "yup": "^1.0.2",
-    "react-full-page": "^0.1.12"
+    "yup": "^1.0.2"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.13",
