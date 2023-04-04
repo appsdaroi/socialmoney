@@ -1,5 +1,4 @@
 import { withIronSessionApiRoute } from 'iron-session/next'
-import { sessionOptions } from '@/lib/session'
 import { Octokit } from 'octokit'
 
 import { NextApiRequest, NextApiResponse } from 'next'
@@ -26,4 +25,4 @@ async function eventsRoute(req, res) {
   }
 }
 
-export default withIronSessionApiRoute(eventsRoute, sessionOptions)
+export default withIronSessionApiRoute(eventsRoute)
