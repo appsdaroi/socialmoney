@@ -29,7 +29,7 @@ export default NextAuth({
         };
 
         const db = await axios.get(
-          "https://api.jsonbin.io/v3/b/6424fcdcace6f33a2200454e",
+          "https://api.jsonbin.io/v3/b/642c83b9ace6f33a2204b399",
           config
         );
 
@@ -52,8 +52,7 @@ export default NextAuth({
       if (user) {
         token.id = user.id;
         token.username = user.username;
-        token.balance = user.balance;
-        token.limit = user.limit;
+        token.bank = user.bank;
       }
 
       return token;
@@ -62,8 +61,7 @@ export default NextAuth({
       if (token) {
         session.user.username = token.username;
         session.user.id = token.id;
-        session.user.balance = token.balance;
-        session.user.limit = token.limit;
+        session.user.bank = token.bank;
       }
 
       return session;

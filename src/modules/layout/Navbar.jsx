@@ -1,6 +1,6 @@
 import { useState, useContext } from "react"
 
-import { formatMoney } from "@/helpers/format";
+import { toDollars } from "@/helpers/format";
 import { moneyContext } from "@/services/moneyContext";
 
 import Image from "next/image";
@@ -10,7 +10,7 @@ import { Modal } from "@/modules/components/indications"
 
 const Navbar = ({ userCurrMoney }) => {
   const { money, setMoney } = useContext(moneyContext);
-  const [openModal, setOpenModal] = useState(false)
+  const [openModal, setOpenModal] = useState(false);
 
   return (
     <>
@@ -31,7 +31,7 @@ const Navbar = ({ userCurrMoney }) => {
             className="px-4 py-2 font-semibold text-white rounded bg-primary-500"
             href="/wallet"
           >
-            {formatMoney(money)}
+            {toDollars(money)}
           </Link>
         </div>
       </nav>

@@ -1,7 +1,11 @@
 import { useEffect, useState, useRef, useContext } from "react";
 import { Poppins } from "next/font/google";
-import { signOut, getSession } from "next-auth/react";
+import { getSession } from "next-auth/react";
 
+import _ from "lodash";
+import axios from "axios";
+
+import { toDollars, toCents } from "@/helpers/format";
 
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
@@ -26,10 +30,11 @@ const poppins = Poppins({
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
 });
 
-export default function Wallet() {
+export default function Wallet({ session }) {
   const { money, setMoney } = useContext(moneyContext);
 
   const [openModal, setOpenModal] = useState(false);
+  const [clicked, setClicked] = useState(false);
   const [bankNotification, setBankNotification] = useState(false);
   const [activeType, setActiveType] = useState("cpf");
 
@@ -71,6 +76,8 @@ export default function Wallet() {
   });
 
   const handleWithdraw = () => {
+    setClicked(true);
+
     const pixInfo = pixRef.current;
     const moneyInfo = moneyRef.current;
 
@@ -148,6 +155,12 @@ export default function Wallet() {
   const checkValidWithdraw = () => {
     if (withdrawValues.pix.hasErrors || withdrawValues.money.hasErrors) return;
 
+    if (
+      parseInt(moneyRef.current.value) == 0 ||
+      moneyRef.current.value == undefined
+    )
+      return toast.error("Valor a ser retirado é inválido!");
+
     if (parseInt(moneyRef.current.value) > money) {
       toast.error("Saldo insuficiente!");
 
@@ -159,10 +172,56 @@ export default function Wallet() {
         },
       });
 
-      return
+      return;
     }
 
-    setMoney(money - parseInt(moneyRef.current.value));
+    setMoney(money - toCents(moneyRef.current.value));
+  };
+
+  const checkNumberInput = (e) => {
+    if (isNaN(e.key) && ![8, 46].includes(e.keyCode)) return e.preventDefault();
+
+    return true;
+  };
+
+  const updateDb = async (value) => {
+    const config = {
+      headers: {
+        "X-Master-Key":
+          "$2b$10$qo5bE7wh/z3fVPs.xyH6W.jly4sXaI7d3T3LoiqfYl8Rkw0U1JThi",
+      },
+    };
+
+    const db = await axios.get(
+      "https://api.jsonbin.io/v3/b/642c83b9ace6f33a2204b399",
+      config
+    );
+
+    const currentData = db.data.record;
+
+    const currentUser = _.find(
+      currentData.users,
+      (user) => user.id === session.user.id
+    );
+
+    currentUser.balance = currentUser.balance - toCents(value);
+
+    const thisUserIndex = _.findIndex(
+      currentData.users,
+      (user) => user.id === session.user.id
+    );
+
+    currentData.users.splice(thisUserIndex, 1, currentUser);
+
+    await axios({
+      method: "put",
+      url: "https://api.jsonbin.io/v3/b/642c83b9ace6f33a2204b399",
+      headers: {
+        "X-Master-Key":
+          "$2b$10$qo5bE7wh/z3fVPs.xyH6W.jly4sXaI7d3T3LoiqfYl8Rkw0U1JThi",
+      },
+      data: currentData,
+    });
 
     MySwal.fire({
       customClass: {
@@ -187,21 +246,25 @@ export default function Wallet() {
     });
   };
 
-  const checkNumberInput = (e) => {
-    if (isNaN(e.key) && ![8, 46].includes(e.keyCode)) return e.preventDefault();
-
-    return true;
-  };
-
   useEffect(() => {
     pixRef.current.value = "";
   }, [activeType]);
+
+  useEffect(() => {
+    clicked && updateDb(withdrawValues.money.value);
+  }, [withdrawValues]);
 
   return (
     <>
       <Modal state={{ openModal, setOpenModal }} />
       <AnimatePresence>
-      {bankNotification && <Notify value={10} setNotificationVisible={setBankNotification}/>}
+        {bankNotification && (
+          <Notify
+            value={withdrawValues.money.value}
+            bank={session.user.bank}
+            setNotificationVisible={setBankNotification}
+          />
+        )}
       </AnimatePresence>
 
       <motion.div
@@ -229,7 +292,9 @@ export default function Wallet() {
             <h2 className="mb-2 text-sm">Seu saldo</h2>
             <div className="text-primary-500">
               <span className="text-sm">R$</span>
-              <span className="text-5xl font-semibold">{money},00</span>
+              <span className="text-5xl font-semibold">
+                {toDollars(money).slice(3)}
+              </span>
             </div>
           </div>
 
