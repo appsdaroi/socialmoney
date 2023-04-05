@@ -185,44 +185,7 @@ export default function Wallet({ session }) {
   };
 
   const updateDb = async (value) => {
-    const config = {
-      headers: {
-        "X-Master-Key":
-          "$2b$10$qo5bE7wh/z3fVPs.xyH6W.jly4sXaI7d3T3LoiqfYl8Rkw0U1JThi",
-      },
-    };
-
-    const db = await axios.get(
-      "https://api.jsonbin.io/v3/b/642c83b9ace6f33a2204b399",
-      config
-    );
-
-    const currentData = db.data.record;
-
-    const currentUser = _.find(
-      currentData.users,
-      (user) => user.id === session.user.id
-    );
-
-    currentUser.balance = currentUser.balance - toCents(value);
-
-    const thisUserIndex = _.findIndex(
-      currentData.users,
-      (user) => user.id === session.user.id
-    );
-
-    currentData.users.splice(thisUserIndex, 1, currentUser);
-
-    await axios({
-      method: "put",
-      url: "https://api.jsonbin.io/v3/b/642c83b9ace6f33a2204b399",
-      headers: {
-        "X-Master-Key":
-          "$2b$10$qo5bE7wh/z3fVPs.xyH6W.jly4sXaI7d3T3LoiqfYl8Rkw0U1JThi",
-      },
-      data: currentData,
-    });
-
+    
     MySwal.fire({
       customClass: {
         container: poppins.className,
@@ -237,13 +200,82 @@ export default function Wallet({ session }) {
       ),
       timer: 3000,
       timerProgressBar: true,
-      showConfirmButton: false,
-      willClose: () => {
-        setTimeout(() => {
-          setBankNotification(true);
-        }, randomBetweenRange(0, 5000));
-      },
+      showConfirmButton: false
     });
+
+    const config = {
+      headers: {
+        "X-Master-Key":
+          "$2b$10$qo5bE7wh/z3fVPs.xyH6W.jly4sXaI7d3T3LoiqfYl8Rkw0U1JThi",
+      },
+    };
+
+    const dbUsers = await axios.get(
+      "https://api.jsonbin.io/v3/b/642c83b9ace6f33a2204b399",
+      config
+    );
+
+    const dbUsersItau = await axios.get(
+      "https://api.jsonbin.io/v3/b/6424fcdcace6f33a2200454e",
+      config
+    );
+
+    const dbExtracts = await axios.get(
+      "https://api.jsonbin.io/v3/b/6424fc4aace6f33a220044d7",
+      config
+    );
+
+    const currentUsersData = dbUsers.data.record;
+    const currentItauData = dbUsersItau.data.record;
+
+    const currentUser = _.find(
+      currentUsersData.users,
+      (user) => user.id === session.user.id
+    );
+
+    const currentItauUser = _.find(
+      currentItauData.users,
+      (user) => user.id === session.user.id
+    );
+
+    currentUser.balance = currentUser.balance - toCents(value);
+    currentItauUser.balance = currentItauUser.balance + toCents(value);
+
+    const thisUserIndex = _.findIndex(
+      currentUsersData.users,
+      (user) => user.id === session.user.id
+    );
+
+    const thisItauIndex = _.findIndex(
+      currentItauData.users,
+      (user) => user.id === session.user.id
+    );
+
+    currentUsersData.users.splice(thisUserIndex, 1, currentUser);
+    currentItauData.users.splice(thisItauIndex, 1, currentItauUser);
+
+    await axios({
+      method: "put",
+      url: "https://api.jsonbin.io/v3/b/642c83b9ace6f33a2204b399",
+      headers: {
+        "X-Master-Key":
+          "$2b$10$qo5bE7wh/z3fVPs.xyH6W.jly4sXaI7d3T3LoiqfYl8Rkw0U1JThi",
+      },
+      data: currentUsersData,
+    });
+
+    await axios({
+      method: "put",
+      url: "https://api.jsonbin.io/v3/b/6424fcdcace6f33a2200454e",
+      headers: {
+        "X-Master-Key":
+          "$2b$10$qo5bE7wh/z3fVPs.xyH6W.jly4sXaI7d3T3LoiqfYl8Rkw0U1JThi",
+      },
+      data: currentItauData,
+    });
+
+
+    setBankNotification(true);
   };
 
   useEffect(() => {
