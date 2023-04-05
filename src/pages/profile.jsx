@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { signOut, getSession } from "next-auth/react";
+
 import Link from "next/link";
 import Image from "next/image";
 
@@ -96,4 +98,20 @@ export default function Profile() {
       </div>
     </motion.div>
   );
+}
+
+export async function getServerSideProps(context) {
+  const { req } = context;
+  const session = await getSession({ req });
+
+  if (!session)
+    return {
+      redirect: { destination: "/auth/signin" },
+    };
+
+  return {
+    props: {
+      session: session,
+    },
+  };
 }

@@ -3,7 +3,7 @@ import { getCsrfToken, getSession } from "next-auth/react";
 export default function SignIn({ csrfToken }) {
   return (
     <form
-      className="flex flex-col items-center justify-center w-full h-screen gap-2 bg-primary"
+      className="flex flex-col items-center justify-center w-full h-screen gap-2 bg-primary-500"
       method="post"
       action="/api/auth/callback/credentials"
     >

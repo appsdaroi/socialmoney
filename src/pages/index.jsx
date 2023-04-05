@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { signOut, getSession } from "next-auth/react";
+
 
 import { Post } from "@/modules/components/feed";
 import { FullPage, Slide } from "react-full-page";
@@ -76,4 +78,21 @@ export default function Home() {
       </FullPage>
     </motion.div>
   );
+}
+
+
+export async function getServerSideProps(context) {
+  const { req } = context;
+  const session = await getSession({ req });
+
+  if (!session)
+    return {
+      redirect: { destination: "/auth/signin" },
+    };
+
+  return {
+    props: {
+      session: session,
+    },
+  };
 }

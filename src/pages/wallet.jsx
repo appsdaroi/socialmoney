@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef, useContext } from "react";
 import { Poppins } from "next/font/google";
+import { signOut, getSession } from "next-auth/react";
+
 
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
@@ -346,4 +348,20 @@ export default function Wallet() {
       </motion.div>
     </>
   );
+}
+
+export async function getServerSideProps(context) {
+  const { req } = context;
+  const session = await getSession({ req });
+
+  if (!session)
+    return {
+      redirect: { destination: "/auth/signin" },
+    };
+
+  return {
+    props: {
+      session: session,
+    },
+  };
 }
