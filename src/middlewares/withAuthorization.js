@@ -5,7 +5,6 @@ export default function withAuthorization(middleware, requireAuth = []) {
   return async (request, next) => {
 
     const pathname = request.nextUrl.pathname;
-    console.log(pathname)
 
     if (requireAuth.some((path) => pathname.startsWith(path))) {
       
