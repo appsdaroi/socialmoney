@@ -103,7 +103,7 @@ const Modal = ({ state }) => {
   return (
     <>
       <AnimatePresence>
-        {bankNotification && <Notify value={10} setNotificationVisible={setBankNotification}/>}
+        {bankNotification && <Notify value={10} setNotificationVisible={setBankNotification} bank="itau"/>}
           
 
         {openModal && (
