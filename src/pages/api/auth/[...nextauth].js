@@ -21,50 +21,49 @@ export default NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials, req) {
-        const config = {
-          headers: {
-            "X-Master-Key":
-              "$2b$10$qo5bE7wh/z3fVPs.xyH6W.jly4sXaI7d3T3LoiqfYl8Rkw0U1JThi",
+        if (!credentials?.username || !credentials.password) {
+          return null;
+        }
+
+        const res = await axios.post(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/login`,
+          {
+            username: credentials.username,
+            password: credentials.password,
+          }
+        );
+
+        if (res.data.status !== 200) throw new Error("Usuário ou senha incorretos");
+
+        const thisUserId = res.data.response.id;
+        const thisUserData = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/socialmoney/${thisUserId}`
+        );
+
+        if (thisUserData.data.status !== 200)
+          throw new Error("Usuário não tem registro neste APP.");
+
+        return {
+          session: {
+            user: {
+              id: res.data.response.id,
+              username: res.data.response.username,
+              token: res.data.response.api_token,
+              balance: thisUserData.data.response.user.balance,
+              bank: thisUserData.data.response.user.bank,
+              ref: thisUserData.data.response.user.ref,
+            },
           },
         };
-
-        const db = await axios.get(
-          "https://api.jsonbin.io/v3/b/642c83b9ace6f33a2204b399",
-          config
-        );
-
-        const dbUser = _.find(
-          db.data.record.users,
-          (user) =>
-            user.username === credentials.username &&
-            user.password === credentials.password
-        );
-
-        console.log(dbUser);
-        if (dbUser) return dbUser;
-
-        return null;
       },
     }),
   ],
   callbacks: {
-    jwt: async ({ token, user }) => {
-      if (user) {
-        token.id = user.id;
-        token.username = user.username;
-        token.bank = user.bank;
-      }
-
-      return token;
+    jwt: ({ token, user }) => {
+      return { ...token, ...user }
     },
-    session: async ({ session, token }) => {
-      if (token) {
-        session.user.username = token.username;
-        session.user.id = token.id;
-        session.user.bank = token.bank;
-      }
-
-      return session;
-    },
+    session: ({ session, token }) => {
+      return { ...session, ...token }
+    }
   },
 });

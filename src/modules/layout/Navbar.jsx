@@ -1,6 +1,6 @@
 import { useState, useContext } from "react"
 
-import { toDollars } from "@/helpers/format";
+import { CentsToReais } from "@/helpers/format";
 import { moneyContext } from "@/services/moneyContext";
 
 import Image from "next/image";
@@ -31,7 +31,7 @@ const Navbar = ({ userCurrMoney }) => {
             className="px-4 py-2 font-semibold text-white rounded bg-primary-500"
             href="/wallet"
           >
-            {toDollars(money)}
+            {CentsToReais(money)}
           </Link>
         </div>
       </nav>

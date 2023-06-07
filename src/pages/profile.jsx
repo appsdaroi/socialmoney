@@ -20,7 +20,7 @@ export default function Profile() {
     >
       <div className="grid gap-3.5">
         <div className="flex px-4 pt-4">
-          <div className="relative w-auto">
+          <div className="relative w-auto" onClick={() => signOut()}>
             <span className="absolute top-0 right-0 p-3 h-[72px] w-[72px] rounded-full border border-primary-500" />
             <Image
               className="p-1 ml-auto rounded-full"

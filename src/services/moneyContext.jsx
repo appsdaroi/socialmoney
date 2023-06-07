@@ -10,37 +10,23 @@ const moneyContext = createContext({
 });
 
 const MoneyContextProvider = ({ children }) => {
-  const { data: session } = useSession()
+  const { data: session } = useSession();
   const [money, setMoney] = useState(0);
 
   const getBalance = async () => {
-    const config = {
-      headers: {
-        "X-Master-Key":
-          "$2b$10$qo5bE7wh/z3fVPs.xyH6W.jly4sXaI7d3T3LoiqfYl8Rkw0U1JThi",
-      },
-    };
-
-    const db = await axios.get(
-      "https://api.jsonbin.io/v3/b/642c83b9ace6f33a2204b399",
-      config
+    const updateUserBalance = await axios.get(
+      `${process.env.NEXT_PUBLIC_API_URL}/api/socialmoney/${session.session.user.id}`
     );
 
-    const currentData = db.data.record;
+    if (updateUserBalance.data.status !== 200)
+      return setMoney(session.session.user.balance);
 
-    const currentUser = _.find(
-      currentData.users,
-      (user) =>
-        user.id === session.user.id
-    );
-
-    setMoney(currentUser.balance);
-  }
+    setMoney(updateUserBalance.data.response.user.balance);
+  };
 
   useEffect(() => {
-    getBalance()
-  }, [])
-  
+    getBalance();
+  }, []);
 
   return (
     <moneyContext.Provider value={{ money, setMoney }}>

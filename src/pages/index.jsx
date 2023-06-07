@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { signOut, getSession } from "next-auth/react";
 
-
 import { Post } from "@/modules/components/feed";
 import { FullPage, Slide } from "react-full-page";
 
