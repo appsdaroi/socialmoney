@@ -2,7 +2,7 @@ import { createContext, useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 
 import _ from "lodash";
-import axios from "axios";
+import { FetchWithToken } from "@/utils/fetch";
 
 const moneyContext = createContext({
   money: 0,
@@ -14,9 +14,10 @@ const MoneyContextProvider = ({ children }) => {
   const [money, setMoney] = useState(0);
 
   const getBalance = async () => {
-    const updateUserBalance = await axios.get(
-      `${process.env.NEXT_PUBLIC_API_URL}/api/socialmoney/${session.session.user.id}`
-    );
+    const updateUserBalance = await FetchWithToken({
+      path: `socialmoney/${session.session.user.id}`,
+      method: "GET",
+    });
 
     if (updateUserBalance.data.status !== 200)
       return setMoney(session.session.user.balance);

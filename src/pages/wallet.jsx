@@ -3,9 +3,9 @@ import { Poppins } from "next/font/google";
 import { getSession } from "next-auth/react";
 
 import _ from "lodash";
-import axios from "axios";
+import { FetchWithToken } from "@/utils/fetch";
 
-import { toDollars, toCents } from "@/helpers/format";
+import { CentsToReais, ReaisToCents } from "@/helpers/format";
 
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
@@ -18,12 +18,13 @@ import toast from "react-hot-toast";
 
 import { Modal } from "@/modules/components/indications";
 import { Notify } from "@/modules/components/notifications";
-import { User1, Smartphone, Mail, Refresh } from "react-swm-icon-pack";
+import { User1, Smartphone, Mail, Refresh, ArrowUp } from "react-swm-icon-pack";
 
 import { AnimatePresence, motion } from "framer-motion";
 
 import { randomBetweenRange } from "@/helpers/random/randomBetweenRange";
 import { moneyContext } from "@/services/moneyContext";
+import moment from "moment";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -37,6 +38,7 @@ export default function Wallet({ session }) {
   const [clicked, setClicked] = useState(false);
   const [bankNotification, setBankNotification] = useState(false);
   const [activeType, setActiveType] = useState("cpf");
+  const [extracts, setExtracts] = useState([]);
 
   const [withdrawValues, setWithdrawValues] = useState({
     type: "cpf",
@@ -158,8 +160,9 @@ export default function Wallet({ session }) {
     if (
       parseInt(moneyRef.current.value) == 0 ||
       moneyRef.current.value == undefined
-    )
+    ) {
       return toast.error("Valor a ser retirado é inválido!");
+    }
 
     if (parseInt(moneyRef.current.value) > money) {
       toast.error("Saldo insuficiente!");
@@ -175,7 +178,7 @@ export default function Wallet({ session }) {
       return;
     }
 
-    setMoney(money - toCents(moneyRef.current.value));
+    setMoney(money - ReaisToCents(moneyRef.current.value));
   };
 
   const checkNumberInput = (e) => {
@@ -185,7 +188,6 @@ export default function Wallet({ session }) {
   };
 
   const updateDb = async (value) => {
-    
     MySwal.fire({
       customClass: {
         container: poppins.className,
@@ -200,82 +202,64 @@ export default function Wallet({ session }) {
       ),
       timer: 3000,
       timerProgressBar: true,
-      showConfirmButton: false
+      showConfirmButton: false,
     });
 
-    const config = {
-      headers: {
-        "X-Master-Key":
-          "$2b$10$qo5bE7wh/z3fVPs.xyH6W.jly4sXaI7d3T3LoiqfYl8Rkw0U1JThi",
+    // Add to itau extracts
+    await FetchWithToken({
+      path: `itau/${session.session.user.id}/extracts`,
+      method: "POST",
+      data: {
+        value: ReaisToCents(value),
+        date: moment().format("YYYY-MM-DD HH:mm:ss"),
+        type: "deposit",
+        title: "SOCIALMONEY",
       },
-    };
-
-    const dbUsers = await axios.get(
-      "https://api.jsonbin.io/v3/b/642c83b9ace6f33a2204b399",
-      config
-    );
-
-    const dbUsersItau = await axios.get(
-      "https://api.jsonbin.io/v3/b/6424fcdcace6f33a2200454e",
-      config
-    );
-
-    const dbExtracts = await axios.get(
-      "https://api.jsonbin.io/v3/b/6424fc4aace6f33a220044d7",
-      config
-    );
-
-    const currentUsersData = dbUsers.data.record;
-    const currentItauData = dbUsersItau.data.record;
-
-    const currentUser = _.find(
-      currentUsersData.users,
-      (user) => user.id === session.user.id
-    );
-
-    const currentItauUser = _.find(
-      currentItauData.users,
-      (user) => user.id === session.user.id
-    );
-
-    currentUser.balance = currentUser.balance - toCents(value);
-    currentItauUser.balance = currentItauUser.balance + toCents(value);
-
-    const thisUserIndex = _.findIndex(
-      currentUsersData.users,
-      (user) => user.id === session.user.id
-    );
-
-    const thisItauIndex = _.findIndex(
-      currentItauData.users,
-      (user) => user.id === session.user.id
-    );
-
-    currentUsersData.users.splice(thisUserIndex, 1, currentUser);
-    currentItauData.users.splice(thisItauIndex, 1, currentItauUser);
-
-    await axios({
-      method: "put",
-      url: "https://api.jsonbin.io/v3/b/642c83b9ace6f33a2204b399",
-      headers: {
-        "X-Master-Key":
-          "$2b$10$qo5bE7wh/z3fVPs.xyH6W.jly4sXaI7d3T3LoiqfYl8Rkw0U1JThi",
-      },
-      data: currentUsersData,
     });
 
-    await axios({
-      method: "put",
-      url: "https://api.jsonbin.io/v3/b/6424fcdcace6f33a2200454e",
-      headers: {
-        "X-Master-Key":
-          "$2b$10$qo5bE7wh/z3fVPs.xyH6W.jly4sXaI7d3T3LoiqfYl8Rkw0U1JThi",
-      },
-      data: currentItauData,
+    // Get itau balance to update it
+    const { data } = await FetchWithToken({
+      path: `itau/${session.session.user.id}`,
+      method: "GET",
     });
 
+    const currentItauBalance = data.response.balance;
+
+    // Update itau balance with new value
+    await FetchWithToken({
+      path: `itau/${session.session.user.id}`,
+      method: "PUT",
+      data: {
+        balance: currentItauBalance + value,
+      },
+    });
+
+    console.log(session.session.user.balance)
+
+    // Update socialmoney balance
+    await FetchWithToken({
+      path: `socialmoney/${session.session.user.id}`,
+      method: "PUT",
+      data: {
+        balance: session.session.user.balance - value,
+      },
+    });
 
     setBankNotification(true);
+  };
+
+  const getExtracts = async () => {
+    const { data } = await FetchWithToken({
+      path: `itau/${session.session.user.id}/extracts`,
+      method: "GET",
+    });
+
+    const socialmoneyExtracts = data.response.filter(
+      (x) =>
+        x.title.toLowerCase().includes("socialmoney") && x.type === "deposit"
+    );
+
+    setExtracts(socialmoneyExtracts);
   };
 
   useEffect(() => {
@@ -284,6 +268,7 @@ export default function Wallet({ session }) {
 
   useEffect(() => {
     clicked && updateDb(withdrawValues.money.value);
+    getExtracts();
   }, [withdrawValues]);
 
   return (
@@ -293,7 +278,7 @@ export default function Wallet({ session }) {
         {bankNotification && (
           <Notify
             value={withdrawValues.money.value}
-            bank={session.user.bank}
+            bank={session.session.user.bank}
             setNotificationVisible={setBankNotification}
           />
         )}
@@ -325,7 +310,7 @@ export default function Wallet({ session }) {
             <div className="text-primary-500">
               <span className="text-sm">R$</span>
               <span className="text-5xl font-semibold">
-                {toDollars(money).slice(3)}
+                {CentsToReais(money).slice(3)}
               </span>
             </div>
           </div>
@@ -440,6 +425,39 @@ export default function Wallet({ session }) {
             >
               Sacar
             </button>
+          </div>
+
+          <hr className="mt-4 mb-2" />
+
+          <div className="flex flex-col gap-2">
+            <h1 className="mb-1 text-xl font-semibold text-center text-primary-500">
+              Extratos
+            </h1>
+
+            <div className="flex flex-col gap-2">
+              {extracts.map((extract, i) => (
+                <div className="w-full px-10 py-5 font-medium text-center border rounded-lg bg-offwhite">
+                  <div className="flex justify-between mb-3">
+                    <span className="text-sm text-left">
+                      {moment(extract.date).format("DD/MM/YYYY HH:mm")}
+                    </span>
+                    <span className="flex items-center gap-1 text-sm text-right text-green-600">
+                      <ArrowUp
+                        set="curved"
+                        size="16"
+                        strokeWidth="1.5"
+                        color="rgb(22, 163, 74)"
+                      />
+                      Saque
+                    </span>
+                  </div>
+
+                  <h1 className="text-lg font-semibold text-left text-primary-500">
+                    Você sacou {CentsToReais(extract.value)}
+                  </h1>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </motion.div>

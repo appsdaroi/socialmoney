@@ -4,6 +4,8 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import _ from "lodash";
 import axios from "axios";
 
+import { FetchWithToken } from "@/utils/fetch";
+
 export default NextAuth({
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
@@ -25,7 +27,7 @@ export default NextAuth({
           return null;
         }
 
-        const res = await axios.post(
+        const request = axios.post(
           `${process.env.NEXT_PUBLIC_API_URL}/api/login`,
           {
             username: credentials.username,
@@ -33,37 +35,49 @@ export default NextAuth({
           }
         );
 
-        if (res.data.status !== 200) throw new Error("Usuário ou senha incorretos");
+        return await request
+          .then(async (res) => {
+            if (res.data.status !== 200)
+              throw new Error("Usuário ou senha incorretos");
 
-        const thisUserId = res.data.response.id;
-        const thisUserData = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/socialmoney/${thisUserId}`
-        );
+            const thisUserId = res.data.response.id;
+            const thisUserToken = res.data.response.api_token;
 
-        if (thisUserData.data.status !== 200)
-          throw new Error("Usuário não tem registro neste APP.");
+            const thisUserData = await FetchWithToken({
+              path: `socialmoney/${thisUserId}`,
+              method: "GET",
+              token: thisUserToken,
+            });
 
-        return {
-          session: {
-            user: {
-              id: res.data.response.id,
-              username: res.data.response.username,
-              token: res.data.response.api_token,
-              balance: thisUserData.data.response.user.balance,
-              bank: thisUserData.data.response.user.bank,
-              ref: thisUserData.data.response.user.ref,
-            },
-          },
-        };
+            if (thisUserData.data.status !== 200)
+              throw new Error("Usuário não tem registro neste APP.");
+
+            return {
+              session: {
+                user: {
+                  id: res.data.response.id,
+                  username: res.data.response.username,
+                  token: res.data.response.api_token,
+                  balance: thisUserData.data.response.user.balance,
+                  bank: thisUserData.data.response.user.bank,
+                  ref: thisUserData.data.response.user.ref,
+                },
+              },
+            };
+          })
+          .catch((e) => {
+            console.log(e);
+            throw new Error(e);
+          });
       },
     }),
   ],
   callbacks: {
     jwt: ({ token, user }) => {
-      return { ...token, ...user }
+      return { ...token, ...user };
     },
     session: ({ session, token }) => {
-      return { ...session, ...token }
-    }
+      return { ...session, ...token };
+    },
   },
 });
