@@ -34,6 +34,8 @@ const poppins = Poppins({
 export default function Wallet({ session }) {
   const { money, setMoney } = useContext(moneyContext);
 
+  console.log(session.session.user)
+
   const [openModal, setOpenModal] = useState(false);
   const [clicked, setClicked] = useState(false);
   const [bankNotification, setBankNotification] = useState(false);
@@ -436,7 +438,7 @@ export default function Wallet({ session }) {
 
             <div className="flex flex-col gap-2">
               {extracts.map((extract, i) => (
-                <div className="w-full px-10 py-5 font-medium text-center border rounded-lg bg-offwhite">
+                <div key={i} className="w-full px-10 py-5 font-medium text-center border rounded-lg bg-offwhite">
                   <div className="flex justify-between mb-3">
                     <span className="text-sm text-left">
                       {moment(extract.date).format("DD/MM/YYYY HH:mm")}
