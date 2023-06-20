@@ -17,7 +17,7 @@ const Navbar = ({ userCurrMoney }) => {
       <Modal state={{openModal, setOpenModal}}/>
     
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-[4.5rem] px-4 bg-offwhite border-b`}
+        className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between h-[55px] px-4 bg-offwhite border-b`}
       >
         <Link href="#">
           <Image src="/img/logo-dual.svg" width={32} height={32} />

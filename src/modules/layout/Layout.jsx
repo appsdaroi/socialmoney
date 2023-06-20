@@ -21,7 +21,7 @@ const Layout = ({ children }) => {
   return (
     <MoneyContextProvider>
       <div
-        className={`${poppins.className} mt-[72px] h-[calc(100vh-72px-56px)] flex justify-center ${currentRoute !== "/" && "overflow-y-scroll"}`}
+        className={`${poppins.className} mt-[55px] h-[calc(100vh-55px-48px)] flex justify-center ${currentRoute !== "/" && "overflow-y-scroll"}`}
       >
         <Navbar/>
 
@@ -31,8 +31,6 @@ const Layout = ({ children }) => {
 
         <BottomNav/>
       </div>
-
-      <Toaster position="bottom-center" />
     </MoneyContextProvider>
   );
 };

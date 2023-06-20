@@ -1,7 +1,7 @@
 import { formatToBRL } from 'brazilian-values';
 
 const CentsToReais = (value) => {
-    return formatToBRL(parseInt(value) / 100);
+    return (formatToBRL((parseInt(value) / 10000).toFixed(2)));
 }
 
 const ReaisToCents = (value) => {
