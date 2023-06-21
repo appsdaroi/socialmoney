@@ -66,7 +66,7 @@ const Post = ({ props, isPlaying, likedPost = false }) => {
 
       <div className="absolute bottom-0 left-0 right-0 z-10 h-[70%] flex items-end after:absolute after:bottom-0 after:left-0 after:right-0 after:top-0 after:bg-gradient-to-t after:from-black/75 after:z-[-1]">
         {/* <IOSView> */}
-        <div className="grid w-full gap-3 px-4 mb-40 text-white">
+        <div className="grid w-full gap-3 px-4 mb-[8rem] text-white">
           <div className="flex justify-between w-full">
             <div className="grid items-end content-end gap-4">
               <div className="flex items-center gap-2">
